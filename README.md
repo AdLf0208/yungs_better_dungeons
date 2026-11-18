@@ -1,22 +1,19 @@
-# YUNG's Better Dungeons for Horizon — slice 1: the small dungeon
+# YUNG's Better Dungeons — a Horizon port
 
-This is a Horizon port of **YUNG's Better Dungeons 1.21.1-NeoForge-5.1.4**
-(by YUNGNICKYOUNG and Acarii, **LGPL-3.0-only**), for Minecraft Java 26.3 on the
-Horizon SDK (`api = "0.2"`, Horizon `0b14f8a…`, mixins `e59da90…`).
+**YUNG's Better Dungeons** is a Minecraft mod. Adds actual dungeons to the game. This repository is a **port of it to [Horizon](https://github.com/horizon-rust/horizon)**, the Rust engine for Minecraft Java 26.3. It carries the complete source of the port plus the content files it ships, and installs as a single `.hmod` package.
 
-The mod's structures are assembled by `yungsapi:yung_jigsaw`, a Java structure type
-that this project does not have. The port therefore registers **its own structure
-type**, `betterdungeons:small_dungeon_type`, which does the assembly the Java type
-did: it draws a start element from the jar's own template pool by the jar's
-weights, places it so its named anchor jigsaw sits on the start position, walks
-every jigsaw connector breadth-first (trying the four rotations until the child's
-own connector faces the parent's), and decorates each piece with the eleven
-`betterdungeons:*` processors the jar's four processor lists name — the dungeon
-banner, the mob spawner, the chest and banner caps, the candle, the ceiling props
-and lamps, the ruin pass that turns air into cave air, the support legs and the
-rule processor.
+Upstream: [YUNG-GANG/YUNGs-Better-Dungeons](https://github.com/YUNG-GANG/YUNGs-Better-Dungeons) — licence **LGPL-3.0-only**.
 
-## What the slice implements
+| | |
+|---|---|
+| Upstream mod | YUNG's Better Dungeons ([source](https://github.com/YUNG-GANG/YUNGs-Better-Dungeons)) |
+| Ported to | Horizon 0b14f8a, Minecraft Java 26.3, mod API `0.2` |
+| Package | `betterdungeons.hmod` (install it with the Horizon launcher) |
+| Licence | **LGPL-3.0-only** — the upstream mod's licence; see [Licence and credit](#licence-and-credit) |
+
+## What this port implements
+
+### What the slice implements
 
 | | |
 |---|---|
@@ -26,31 +23,46 @@ rule processor.
 | 4 processor lists | the zombie/skeleton/spider shell chains and the loot-pile chain, in the jar's order |
 | 1 readout command | `/betterdungeons status`: the registered type, what is carried, and a deterministic sample assembly |
 
-## What it does not implement (recorded in `notes.md`)
+## Not yet ported
 
-`skeleton_dungeon`, `zombie_dungeon`, `small_nether_dungeon`, `spider_dungeon`
-and the aggregate `better_dungeons` structure tag; the two
-`remove_*_feature_in` biome modifiers; the mod's config file (its defaults are
-compiled in); and the `JigsawJunction` bookkeeping and non-rigid projection
-branches, which nothing in this structure's data asks for.
+- **Only one of the five structures.** `skeleton_dungeon`, `zombie_dungeon`,
+- **The two `remove_*_feature_in` biome modifiers**
+- **The config file** — defaults compiled in (`src/runtime.rs`,
+- **`start_height`'s `x_offset_in_chunk`/`z_offset_in_chunk`**: the jar omits
+- **Saved pieces are re-derived from the template, not from a stored block list**
+- **Liquid settings**: the jar's `"liquid_settings": "ignore_waterlogging"` is
+- **`spawn_overrides`** are carried empty in the JSON and not read (the campaign
 
-## Building and checking
+## Installing
 
-```sh
-python3 tools/gen_tables.py --check     # the Rust tables are what the jar yields
-python3 tools/carry.py --check          # every carried file is the jar's own bytes
-python3 tools/check_content.py --check  # both, plus the 26.3 registry and the shape
-ports/tools/build-slot.sh run --job betterdungeons --port ports/betterdungeons \
-    --step build -- ports/betterdungeons/tools/check.sh
-ports/tools/launcher-game.sh run betterdungeons   # the in-game leg
+1. Install the [Horizon launcher](https://github.com/horizon-rust/horizon/releases) (0.2.70 or newer).
+2. Add `betterdungeons.hmod` to the instance's mods.
+3. The package is pinned to a specific Horizon build; the launcher checks that pin.
+
+## Licence and credit
+
+YUNG's Better Dungeons was created by its upstream authors; the code, models and assets in the original mod
+remain theirs and are used here under **LGPL-3.0-only**. The Rust in this repository is a clean-room
+rewrite for Horizon, not a translation of the original source.
+
+- `LICENSE` — the upstream licence text.
+- `LICENSE-NOTICE.md` — what this port carries and where it came from.
+- The upstream project: https://github.com/YUNG-GANG/YUNGs-Better-Dungeons
+
+## Technical details
+
+```
+horizon-mod.toml   package manifest (id, version, api, [native] pin)
+Cargo.toml         the crate; depends on `horizon-mod-api` from the fetched SDK
+src/               lib.rs (the one `impl Hooks`), runtime.rs (pure logic + tests), glue
+assets/ data/      the content the package ships
+tools/             content generators and the e2e scenario
 ```
 
-## Licence
+- Build: `cargo horizon-mod build` (packages; it does not compile against the game).
+- Test: `cargo test`, `cargo clippy --all-targets -- -D warnings`.
+- In-game: `ports/tools/launcher-game.sh run betterdungeons` in the campaign tree, or install the
+  `.hmod` and play; the harness scenario is `tools/e2e.sh`.
 
-The port is **LGPL-3.0-only**, the licence the jar declares (`license="LGPLv3"` in
-`META-INF/neoforge.mods.toml`) and ships as `LICENSE_YungsBetterDungeons` (the
-LGPL-3.0 text, carried as `LICENSE`). The jar has **no separate asset licence**
-(unlike Twilight Forest), so the templates, loot tables, biome tag and lang file
-travel under the same licence. The complete corresponding source is this crate:
-`src/`, `tools/`, `horizon-mod.toml`, `Cargo.toml` and the carried content.
-See `LICENSE-NOTICE.md` for where each file came from.
+This repository is generated from the campaign's port at `ports/betterdungeons/`; the port's own
+`notes.md` is the full record (decisions, traps, evidence).
